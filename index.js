@@ -524,4 +524,14 @@ app.get('/debug-claude/:hotel', async (req, res) => {
 // EXPORTAR PARA VERCEL
 // ==========================================
 
+const path = require('path');
+
+// Servir archivos estáticos desde public/
+app.use(express.static('public'));
+
+// Ruta principal para el chat
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 module.exports = app;

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Chatbot - Asistente Virtual</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .hotel-selector {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .hotel-selector h1 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .hotel-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .hotel-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .hotel-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .hotel-btn.active {
+            background: white;
+            color: #4CAF50;
+            border-color: white;
+        }
+
+        .chat-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .hotel-info {
+            display: none;
+        }
+
+        .hotel-info.active {
+            display: block;
+        }
+
+        .hotel-info h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .hotel-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: #f1f3f4;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .message.system {
+            align-self: center;
+            background: #e3f2fd;
+            color: #1976d2;
+            font-style: italic;
+            font-size: 0.9em;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            background: #f1f3f4;
+            padding: 15px 20px;
+            border-radius: 20px;
+            border-bottom-left-radius: 5px;
+            border-left: 4px solid #4CAF50;
+            max-width: 70%;
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            padding: 15px 20px;
+            font-size: 16px;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            min-height: 50px;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: #4CAF50;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .quick-questions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 20px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .quick-btn:hover {
+            border-color: #4CAF50;
+            color: #4CAF50;
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            text-align: center;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .welcome-message h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .chat-container {
+                height: 95vh;
+                max-width: 100%;
+            }
+
+            .hotel-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            .quick-questions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Selector de Hotel -->
+        <div class="hotel-selector">
+            <h1>🏨 Asistente Virtual Hotelero</h1>
+            <div class="hotel-buttons">
+                <button class="hotel-btn" onclick="selectHotel('a')">
+                    🏢 Hotel Grand Plaza
+                </button>
+                <button class="hotel-btn" onclick="selectHotel('b')">
+                    🏖️ Hotel Costa Azul
+                </button>
+            </div>
+        </div>
+
+        <!-- Header del Chat -->
+        <div class="chat-header">
+            <div class="hotel-info" id="hotel-a">
+                <h2>🏢 Hotel Grand Plaza</h2>
+                <p><span class="status-indicator"></span>Asistente virtual disponible 24/7 - Ciudad de México</p>
+            </div>
+            <div class="hotel-info" id="hotel-b">
+                <h2>🏖️ Hotel Costa Azul</h2>
+                <p><span class="status-indicator"></span>Asistente virtual disponible 24/7 - Cancún</p>
+            </div>
+        </div>
+
+        <!-- Mensajes del Chat -->
+        <div class="chat-messages" id="chat-messages">
+            <div class="welcome-message">
+                <h3>¡Bienvenido! 👋</h3>
+                <p>Selecciona un hotel arriba para comenzar a chatear con nuestro asistente virtual.</p>
+                <p>Puedes preguntar sobre horarios, servicios, actividades y más.</p>
+            </div>
+        </div>
+
+        <!-- Input del Chat -->
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <textarea 
+                    id="chat-input" 
+                    class="chat-input" 
+                    placeholder="Escribe tu pregunta aquí... (puedes escribir en cualquier idioma)"
+                    rows="1"
+                    disabled
+                ></textarea>
+                <button id="send-btn" class="send-btn" onclick="sendMessage()" disabled>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Preguntas Rápidas -->
+            <div class="quick-questions" id="quick-questions" style="display: none;">
+                <!-- Se llenan dinámicamente según el hotel -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentHotel = null;
+        let isTyping = false;
+
+        // Configuración de la API
+        const API_BASE = 'https://chat-hotel.vercel.app'; // Tu dominio
+        
+        // Preguntas rápidas por hotel
+        const quickQuestions = {
+            a: [
+                "¿Horarios del restaurante?",
+                "¿Contraseña del WiFi?",
+                "What time does the spa open?",
+                "Wie erreiche ich den Concierge?",
+                "¿Actividades de hoy?"
+            ],
+            b: [
+                "¿Actividades en la playa?",
+                "¿Horarios del beach bar?",
+                "What time is snorkeling?",
+                "¿Hay tour a Chichen Itzá?",
+                "Restaurant hours?"
+            ]
+        };
+
+        // Seleccionar hotel
+        function selectHotel(hotel) {
+            currentHotel = hotel;
+            
+            // Actualizar botones
+            document.querySelectorAll('.hotel-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Actualizar info del hotel
+            document.querySelectorAll('.hotel-info').forEach(info => {
+                info.classList.remove('active');
+            });
+            document.getElementById(`hotel-${hotel}`).classList.add('active');
+            
+            // Habilitar chat
+            document.getElementById('chat-input').disabled = false;
+            document.getElementById('send-btn').disabled = false;
+            document.getElementById('chat-input').placeholder = `Pregúntame lo que necesites sobre ${hotel === 'a' ? 'Hotel Grand Plaza' : 'Hotel Costa Azul'}...`;
+            
+            // Limpiar chat y mostrar bienvenida
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '';
+            
+            addMessage('system', `✅ Conectado con ${hotel === 'a' ? 'Hotel Grand Plaza' : 'Hotel Costa Azul'}`);
+            addMessage('bot', `¡Hola! 👋 Soy el asistente virtual del ${hotel === 'a' ? 'Hotel Grand Plaza' : 'Hotel Costa Azul'}. ¿En qué puedo ayudarte hoy? Puedes preguntarme en español, inglés, alemán, francés o cualquier idioma.`);
+            
+            // Mostrar preguntas rápidas
+            showQuickQuestions(hotel);
+            
+            // Focus en input
+            document.getElementById('chat-input').focus();
+        }
+
+        // Mostrar preguntas rápidas
+        function showQuickQuestions(hotel) {
+            const container = document.getElementById('quick-questions');
+            container.innerHTML = '';
+            container.style.display = 'flex';
+            
+            quickQuestions[hotel].forEach(question => {
+                const btn = document.createElement('button');
+                btn.className = 'quick-btn';
+                btn.textContent = question;
+                btn.onclick = () => sendQuickMessage(question);
+                container.appendChild(btn);
+            });
+        }
+
+        // Enviar pregunta rápida
+        function sendQuickMessage(message) {
+            document.getElementById('chat-input').value = message;
+            sendMessage();
+        }
+
+        // Agregar mensaje al chat
+        function addMessage(type, content) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Mostrar indicador de escritura
+        function showTyping() {
+            if (isTyping) return;
+            isTyping = true;
+            
+            const chatMessages = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                Escribiendo...
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Ocultar indicador de escritura
+        function hideTyping() {
+            isTyping = false;
+            const typing = document.getElementById('typing-indicator');
+            if (typing) {
+                typing.remove();
+            }
+        }
+
+        // Enviar mensaje
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message || !currentHotel) return;
+            
+            // Agregar mensaje del usuario
+            addMessage('user', message);
+            input.value = '';
+            
+            // Mostrar typing
+            showTyping();
+            
+            try {
+                // Llamar a la API
+                const response = await fetch(`${API_BASE}/test-ai/${currentHotel}?mensaje=${encodeURIComponent(message)}`);
+                const data = await response.json();
+                
+                hideTyping();
+                
+                if (data.respuesta_ia) {
+                    addMessage('bot', data.respuesta_ia);
+                } else if (data.error) {
+                    addMessage('bot', `❌ Error: ${data.error}`);
+                } else {
+                    addMessage('bot', '❌ No pude procesar tu mensaje. Por favor intenta de nuevo.');
+                }
+                
+            } catch (error) {
+                hideTyping();
+                console.error('Error:', error);
+                addMessage('bot', '❌ Error de conexión. Por favor verifica tu conexión a internet e intenta de nuevo.');
+            }
+            
+            // Focus en input
+            input.focus();
+        }
+
+        // Event listeners
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-resize textarea
+        document.getElementById('chat-input').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Mostrar mensaje inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🤖 Hotel Chatbot Interface cargado');
+            console.log('🔗 API Base:', API_BASE);
+        });
+    </script>
+</body>
+</html>
