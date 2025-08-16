@@ -174,16 +174,16 @@ async function consultarIA(mensaje, hotel) {
   const hotelName = hotel === 'a' ? 'Hotel Grand Plaza' : 'Hotel Costa Azul';
   
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${CONFIG.CLAUDE_API_KEY}`,
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
+        model: 'gpt-3.5-turbo',
         max_tokens: 500,
+        temperature: 0.7,
         messages: [{
           role: 'user',
           content: `
@@ -210,21 +210,13 @@ RESPUESTA (en el idioma de la pregunta):
     });
 
     const data = await response.json();
-    
-    if (data.content && data.content[0] && data.content[0].text) {
-      return data.content[0].text;
-    } else if (data.error) {
-      console.error('Error de Claude API:', data.error);
-      return `Disculpa, tengo un problema técnico momentáneo. Por favor contacta recepción directamente al ${hotel === 'a' ? '+52 55 1234 5678' : '+52 998 987 6543'} 📞`;
-    } else {
-      throw new Error('Respuesta inválida de la IA');
-    }
+    return data.choices[0].message.content;
     
   } catch (error) {
-    console.error('Error consultando IA:', error);
-    const phoneNumber = hotel === 'a' ? '+52 55 1234 5678' : '+52 998 987 6543';
-    return `Disculpa, tengo dificultades técnicas. Por favor contacta recepción al ${phoneNumber} para asistencia inmediata 📞`;
+    console.error('Error con OpenAI:', error);
+    return 'Disculpa, problemas técnicos temporales...';
   }
+
 }
 
 // ==========================================
