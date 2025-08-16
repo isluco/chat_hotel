@@ -1,5 +1,7 @@
 // hotel-chatbot-complete.js - Versión completa del chatbot hotelero
 const express = require('express');
+const twilio = require('twilio');
+
 const app = express();
 
 // Middleware
@@ -520,6 +522,55 @@ app.get('/debug-claude/:hotel', async (req, res) => {
     });
   }
 });
+
+app.post('/webhook/twilio', async (req, res) => {
+  try {
+    const { Body, From, To } = req.body;
+    
+    console.log(`📱 WhatsApp Twilio: "${Body}" de ${From} hacia ${To}`);
+    
+    // Por simplicidad, usar hotel A para testing
+    // Puedes agregar lógica para elegir hotel después
+    const hotel = 'a';
+    
+    // Validar que tenemos mensaje
+    if (!Body || Body.trim() === '') {
+      throw new Error('Mensaje vacío');
+    }
+    
+    // Consultar IA con tu función existente
+    const respuesta = await consultarIA(Body.trim(), hotel);
+    
+    // Crear respuesta Twilio
+    const twiml = new twilio.twiml.MessagingResponse();
+    twiml.message(respuesta);
+    
+    console.log(`🤖 Respuesta enviada: ${respuesta.substring(0, 100)}...`);
+    
+    res.type('text/xml');
+    res.send(twiml.toString());
+    
+  } catch (error) {
+    console.error('❌ Error Twilio webhook:', error);
+    
+    // Respuesta de error
+    const twiml = new twilio.twiml.MessagingResponse();
+    twiml.message('Disculpa, tengo problemas técnicos temporales. Por favor intenta de nuevo en un momento. 📞');
+    
+    res.type('text/xml');
+    res.send(twiml.toString());
+  }
+});
+
+// Test endpoint para Twilio
+app.get('/test-twilio', (req, res) => {
+  res.json({
+    status: 'Twilio webhook endpoint listo ✅',
+    webhook_url: 'https://chat-hotel.vercel.app/webhook/twilio',
+    method: 'POST',
+    testing: 'Envía mensaje al sandbox de Twilio para probar'
+  });
+});
 // ==========================================
 // EXPORTAR PARA VERCEL
 // ==========================================
@@ -533,5 +584,9 @@ app.use(express.static('public'));
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+
+
+
 
 module.exports = app;
