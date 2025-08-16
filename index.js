@@ -7,6 +7,8 @@ const app = express();
 // Middleware
 app.use(express.json());
 
+app.use(express.urlencoded({ extended: true }));
+
 // Importar fetch de forma compatible con Vercel
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
@@ -525,27 +527,42 @@ app.get('/debug-claude/:hotel', async (req, res) => {
 
 app.post('/webhook/twilio', async (req, res) => {
   try {
-    const { Body, From, To } = req.body;
+    console.log('📦 Headers:', req.headers);
+    console.log('📦 Body completo:', req.body);
+    console.log('📦 Body type:', typeof req.body);
     
-    console.log(`📱 WhatsApp Twilio: "${Body}" de ${From} hacia ${To}`);
+    const { Body, From, To, MessageSid, AccountSid } = req.body;
     
-    // Por simplicidad, usar hotel A para testing
-    // Puedes agregar lógica para elegir hotel después
-    const hotel = 'a';
+    console.log(`📱 WhatsApp Twilio:
+      - Mensaje: "${Body}"
+      - De: ${From}  
+      - Para: ${To}
+      - MessageSid: ${MessageSid}
+    `);
     
-    // Validar que tenemos mensaje
+    // Validar que tenemos el mensaje
     if (!Body || Body.trim() === '') {
-      throw new Error('Mensaje vacío');
+      console.log('⚠️ Mensaje vacío recibido');
+      const twiml = new twilio.twiml.MessagingResponse();
+      twiml.message('¡Hola! Envíame tu pregunta y te ayudo con información del hotel 😊');
+      
+      res.type('text/xml');
+      return res.send(twiml.toString());
     }
     
-    // Consultar IA con tu función existente
+    // Hotel por defecto para testing
+    const hotel = 'a';
+    
+    console.log(`🤖 Consultando IA para: "${Body.trim()}"`);
+    
+    // Consultar IA
     const respuesta = await consultarIA(Body.trim(), hotel);
+    
+    console.log(`✅ Respuesta IA: ${respuesta.substring(0, 100)}...`);
     
     // Crear respuesta Twilio
     const twiml = new twilio.twiml.MessagingResponse();
     twiml.message(respuesta);
-    
-    console.log(`🤖 Respuesta enviada: ${respuesta.substring(0, 100)}...`);
     
     res.type('text/xml');
     res.send(twiml.toString());
@@ -553,9 +570,8 @@ app.post('/webhook/twilio', async (req, res) => {
   } catch (error) {
     console.error('❌ Error Twilio webhook:', error);
     
-    // Respuesta de error
     const twiml = new twilio.twiml.MessagingResponse();
-    twiml.message('Disculpa, tengo problemas técnicos temporales. Por favor intenta de nuevo en un momento. 📞');
+    twiml.message('Disculpa, tengo problemas técnicos. Por favor intenta de nuevo 🔧');
     
     res.type('text/xml');
     res.send(twiml.toString());
