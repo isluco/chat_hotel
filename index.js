@@ -474,7 +474,7 @@ app.get('/health', (req, res) => {
 // Agregar este endpoint al final del código, antes de module.exports
 
 
-app.post('/webhook/twilio', async (req, res) => {
+app.post('/webhook_tw/twilio', async (req, res) => {
   try {
     console.log('📦 Weeebhook recibido en hotels TWILIO:', JSON.stringify(req.body, null, 2));
     
