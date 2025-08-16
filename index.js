@@ -393,7 +393,7 @@ app.post('/webhook/:hotel', async (req, res) => {
   
   try {
     const body = req.body;
-    console.log(`Webhook recibido en hotel ${hotel.toUpperCase()}:`, JSON.stringify(body, null, 2));
+    console.log(`Webhookk recibido en hotel ${hotel.toUpperCase()}:`, JSON.stringify(body, null, 2));
     
     // Verificar estructura del mensaje
     if (body.entry && body.entry[0] && body.entry[0].changes && body.entry[0].changes[0]) {
@@ -476,7 +476,7 @@ app.get('/health', (req, res) => {
 
 app.post('/webhook/twilio', async (req, res) => {
   try {
-    console.log('📦 Webhook recibido en hotels TWILIO:', JSON.stringify(req.body, null, 2));
+    console.log('📦 Weeebhook recibido en hotels TWILIO:', JSON.stringify(req.body, null, 2));
     
     // Debug paso a paso
     console.log('🔍 Paso 1: Inicio del procesamiento');
