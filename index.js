@@ -527,51 +527,46 @@ app.get('/debug-claude/:hotel', async (req, res) => {
 
 app.post('/webhook/twilio', async (req, res) => {
   try {
-    console.log('📦 Headers:', req.headers);
-    console.log('📦 Body completo:', req.body);
-    console.log('📦 Body type:', typeof req.body);
+    console.log('📦 Webhook recibido en hotel TWILIO:', JSON.stringify(req.body, null, 2));
     
-    const { Body, From, To, MessageSid, AccountSid } = req.body;
+    const { Body, From, To, MessageSid, ProfileName } = req.body;
     
-    console.log(`📱 WhatsApp Twilio:
-      - Mensaje: "${Body}"
-      - De: ${From}  
-      - Para: ${To}
-      - MessageSid: ${MessageSid}
-    `);
+    console.log(`📱 Procesando mensaje de ${ProfileName}: "${Body}"`);
     
-    // Validar que tenemos el mensaje
+    // Validar mensaje
     if (!Body || Body.trim() === '') {
-      console.log('⚠️ Mensaje vacío recibido');
+      console.log('⚠️ Mensaje vacío');
       const twiml = new twilio.twiml.MessagingResponse();
-      twiml.message('¡Hola! Envíame tu pregunta y te ayudo con información del hotel 😊');
+      twiml.message('¡Hola! ¿En qué puedo ayudarte? 😊');
       
       res.type('text/xml');
       return res.send(twiml.toString());
     }
     
-    // Hotel por defecto para testing
+    // Hotel A por defecto para testing
     const hotel = 'a';
     
-    console.log(`🤖 Consultando IA para: "${Body.trim()}"`);
+    console.log(`🤖 Consultando IA para hotel ${hotel}: "${Body}"`);
     
-    // Consultar IA
-    const respuesta = await consultarIA(Body.trim(), hotel);
+    // Llamar a tu función de IA
+    const respuestaIA = await consultarIA(Body.trim(), hotel);
     
-    console.log(`✅ Respuesta IA: ${respuesta.substring(0, 100)}...`);
+    console.log(`✅ IA respondió: ${respuestaIA.substring(0, 100)}...`);
     
-    // Crear respuesta Twilio
+    // Responder por Twilio
     const twiml = new twilio.twiml.MessagingResponse();
-    twiml.message(respuesta);
+    twiml.message(respuestaIA);
+    
+    console.log('📤 Enviando respuesta a Twilio...');
     
     res.type('text/xml');
     res.send(twiml.toString());
     
   } catch (error) {
-    console.error('❌ Error Twilio webhook:', error);
+    console.error('❌ Error en webhook Twilio:', error);
     
     const twiml = new twilio.twiml.MessagingResponse();
-    twiml.message('Disculpa, tengo problemas técnicos. Por favor intenta de nuevo 🔧');
+    twiml.message('Disculpa, problemas técnicos temporales. Intenta de nuevo 🔧');
     
     res.type('text/xml');
     res.send(twiml.toString());
