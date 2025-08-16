@@ -12,7 +12,7 @@ app.use(express.json());
 
 const CONFIG = {
   // Tu API key de Claude (conseguir en console.anthropic.com)
-  const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY; // CAMBIAR
+  const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY, // CAMBIAR
   
   // Tokens de WhatsApp Business (conseguir en developers.facebook.com)
   WHATSAPP_TOKEN: 'EAABwzLixnjYBAxxxxxxxx', // CAMBIAR
