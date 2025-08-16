@@ -476,7 +476,7 @@ app.get('/health', (req, res) => {
 
 app.post('/webhook/twilio', async (req, res) => {
   try {
-    console.log('📦 Webhook recibido en hotel TWILIO:', JSON.stringify(req.body, null, 2));
+    console.log('📦 Webhook recibido en hotels TWILIO:', JSON.stringify(req.body, null, 2));
     
     // Debug paso a paso
     console.log('🔍 Paso 1: Inicio del procesamiento');
