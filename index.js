@@ -478,19 +478,36 @@ app.post('/webhook/twilio', async (req, res) => {
   try {
     console.log('📦 Webhook recibido en hotel TWILIO:', JSON.stringify(req.body, null, 2));
     
-    const { Body, From, To, MessageSid, ProfileName } = req.body;
+    // Debug paso a paso
+    console.log('🔍 Paso 1: Inicio del procesamiento');
+    
+    const body = req.body;
+    console.log('🔍 Paso 2: Body asignado');
+    
+    const Body = body.Body;
+    const From = body.From;
+    const To = body.To;
+    const MessageSid = body.MessageSid;
+    const ProfileName = body.ProfileName || 'Usuario';
+    
+    console.log('🔍 Paso 3: Variables extraídas');
+    console.log('📋 Body:', Body);
+    console.log('📋 From:', From);
+    console.log('📋 ProfileName:', ProfileName);
     
     console.log(`📱 Procesando mensaje de ${ProfileName}: "${Body}"`);
     
     // Validar mensaje
     if (!Body || Body.trim() === '') {
-      console.log('⚠️ Mensaje vacío');
+      console.log('⚠️ Mensaje vacío detectado');
       const twiml = new twilio.twiml.MessagingResponse();
       twiml.message('¡Hola! ¿En qué puedo ayudarte? 😊');
       
       res.type('text/xml');
       return res.send(twiml.toString());
     }
+    
+    console.log('🔍 Paso 4: Mensaje validado, consultando IA...');
     
     // Hotel A por defecto para testing
     const hotel = 'a';
@@ -511,8 +528,11 @@ app.post('/webhook/twilio', async (req, res) => {
     res.type('text/xml');
     res.send(twiml.toString());
     
+    console.log('🔍 Paso final: Respuesta enviada exitosamente');
+    
   } catch (error) {
     console.error('❌ Error en webhook Twilio:', error);
+    console.error('❌ Stack trace:', error.stack);
     
     const twiml = new twilio.twiml.MessagingResponse();
     twiml.message('Disculpa, problemas técnicos temporales. Intenta de nuevo 🔧');
