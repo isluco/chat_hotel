@@ -320,7 +320,7 @@ app.get('/test/:hotel', (req, res) => {
     pregunta: mensaje,
     respuesta: '🤖 Bot funcionando correctamente - versión básica sin IA',
     timestamp: new Date().toISOString(),
-    config_status: CONFIG.CLAUDE_API_KEY ? 'API Key OK ✅' : 'API Key falta ❌'
+    config_status: CONFIG.OPENAI_API_KEY ? 'API Key OK ✅' : 'API Key falta ❌'
   });
 });
 
@@ -413,8 +413,8 @@ app.post('/webhook/:hotel', async (req, res) => {
           console.log(`📱 Mensaje recibido en hotel ${hotel.toUpperCase()}: "${messageBody}" de ${from}`);
           
           // Verificar que tenemos configuración de IA
-          if (!CONFIG.CLAUDE_API_KEY) {
-            console.error('Claude API Key no configurado');
+          if (!CONFIG.OPENAI_API_KEY) {
+            console.error('OpenAI API Key no configurado');
             return res.status(200).send('OK');
           }
           
@@ -472,58 +472,7 @@ app.get('/health', (req, res) => {
 });
 
 // Agregar este endpoint al final del código, antes de module.exports
-app.get('/debug-claude/:hotel', async (req, res) => {
-  const mensaje = req.query.mensaje || 'test';
-  
-  try {
-    console.log('Testing Claude API...');
-    console.log('API Key exists:', !!CONFIG.CLAUDE_API_KEY);
-    console.log('API Key format:', CONFIG.CLAUDE_API_KEY ? CONFIG.CLAUDE_API_KEY.substring(0, 15) + '...' : 'null');
-    
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CONFIG.CLAUDE_API_KEY}`,
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 100,
-        messages: [{
-          role: 'user',
-          content: 'Test message: ' + mensaje
-        }]
-      })
-    });
 
-    const responseText = await response.text();
-    console.log('Claude response status:', response.status);
-    console.log('Claude response:', responseText);
-
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      data = { raw_response: responseText };
-    }
-
-    res.json({
-      status: response.status,
-      api_key_configured: !!CONFIG.CLAUDE_API_KEY,
-      response_data: data,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-
-  } catch (error) {
-    console.error('Debug error:', error);
-    res.json({
-      error: error.message,
-      api_key_configured: !!CONFIG.CLAUDE_API_KEY,
-      stack: error.stack
-    });
-  }
-});
 
 app.post('/webhook/twilio', async (req, res) => {
   try {
