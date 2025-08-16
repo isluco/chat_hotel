@@ -13,7 +13,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 // ==========================================
 
 const CONFIG = {
-  CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,        // ← Cambiar esta línea
   WHATSAPP_TOKEN: process.env.WHATSAPP_TOKEN,
   VERIFY_TOKEN: process.env.VERIFY_TOKEN || 'HotelBot2024',
   PHONE_ID_HOTEL_A: process.env.PHONE_ID_HOTEL_A,
@@ -177,7 +177,7 @@ async function consultarIA(mensaje, hotel) {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${CONFIG.OPENAI_API_KEY}`,  // ← En lugar de process.env.OPENAI_API_KEY
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -210,13 +210,21 @@ RESPUESTA (en el idioma de la pregunta):
     });
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      return data.choices[0].message.content;
+    } else if (data.error) {
+      console.error('Error de OpenAI API:', data.error);
+      return `Disculpa, tengo un problema técnico momentáneo. Por favor contacta recepción directamente al ${hotel === 'a' ? '+52 55 1234 5678' : '+52 998 987 6543'} 📞`;
+    } else {
+      throw new Error('Respuesta inválida de la IA');
+    }
     
   } catch (error) {
-    console.error('Error con OpenAI:', error);
-    return 'Disculpa, problemas técnicos temporales...';
+    console.error('Error consultando OpenAI:', error);
+    const phoneNumber = hotel === 'a' ? '+52 55 1234 5678' : '+52 998 987 6543';
+    return `Disculpa, tengo dificultades técnicas. Por favor contacta recepción al ${phoneNumber} para asistencia inmediata 📞`;
   }
-
 }
 
 // ==========================================
@@ -285,7 +293,7 @@ app.get('/', (req, res) => {
       test_ai_b: '/test-ai/b?mensaje=restaurant hours?'
     },
     env_check: {
-      claude_key: CONFIG.CLAUDE_API_KEY ? 'Configurado ✅' : 'Falta ❌',
+      openai_key: CONFIG.OPENAI_API_KEY ? 'Configurado ✅' : 'Falta ❌',
       whatsapp_token: CONFIG.WHATSAPP_TOKEN ? 'Configurado ✅' : 'Falta ❌',
       phone_id_a: CONFIG.PHONE_ID_HOTEL_A ? 'Configurado ✅' : 'Falta ❌',
       phone_id_b: CONFIG.PHONE_ID_HOTEL_B ? 'Configurado ✅' : 'Falta ❌'
@@ -321,9 +329,9 @@ app.get('/test-ai/:hotel', async (req, res) => {
     return res.status(400).json({ error: 'Hotel debe ser "a" o "b"' });
   }
   
-  if (!CONFIG.CLAUDE_API_KEY) {
+  if (!CONFIG.OPENAI_API_KEY) {  // ← En lugar de CLAUDE_API_KEY
     return res.status(500).json({ 
-      error: 'Claude API Key no configurado',
+      error: 'OpenAI API Key no configurado',  // ← Actualizar mensaje
       hotel: hotel === 'a' ? 'Hotel Grand Plaza' : 'Hotel Costa Azul',
       pregunta: mensaje
     });
